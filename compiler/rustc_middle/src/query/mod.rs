@@ -402,7 +402,7 @@ rustc_queries! {
     /// Try to build an abstract representation of the given constant.
     query thir_abstract_const(
         key: DefId
-    ) -> Result<Option<ty::Const<'tcx>>, ErrorGuaranteed> {
+    ) -> Result<Option<ty::EarlyBinder<ty::Const<'tcx>>>, ErrorGuaranteed> {
         desc {
             |tcx| "building an abstract representation for `{}`", tcx.def_path_str(key),
         }
@@ -1016,7 +1016,7 @@ rustc_queries! {
         desc { "converting literal to mir constant" }
     }
 
-    query check_match(key: LocalDefId) {
+    query check_match(key: LocalDefId) -> Result<(), rustc_errors::ErrorGuaranteed> {
         desc { |tcx| "match-checking `{}`", tcx.def_path_str(key) }
         cache_on_disk_if { true }
     }
@@ -1813,6 +1813,16 @@ rustc_queries! {
 
     /// Do not call this query directly: invoke `normalize` instead.
     query normalize_projection_ty(
+        goal: CanonicalProjectionGoal<'tcx>
+    ) -> Result<
+        &'tcx Canonical<'tcx, canonical::QueryResponse<'tcx, NormalizationResult<'tcx>>>,
+        NoSolution,
+    > {
+        desc { "normalizing `{}`", goal.value.value }
+    }
+
+    /// Do not call this query directly: invoke `normalize` instead.
+    query normalize_inherent_projection_ty(
         goal: CanonicalProjectionGoal<'tcx>
     ) -> Result<
         &'tcx Canonical<'tcx, canonical::QueryResponse<'tcx, NormalizationResult<'tcx>>>,
